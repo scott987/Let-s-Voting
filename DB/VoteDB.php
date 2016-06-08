@@ -14,8 +14,7 @@ class VoteingDB extends DBManger
 
             if ($query->execute()) {
                 $result["status"]="Success";
-                $query="select last_insert_id() id";
-                $id=$this->db->exec($query);
+                $id=$this->db->exec("select last_insert_id() id");
                 foreach ($option as $op) {
                     $query = $this->db->prepare("insert into option (OptionName,TopicId,OptionCount) values (:optionName,:topicId,0)");
                     $query->bindValue(':optionName', $op);
