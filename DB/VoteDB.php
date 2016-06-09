@@ -1,22 +1,30 @@
 <?php
+
 require_once("DBManager.php");
 
-class VoteingDB extends DBManger
+class VotingDB extends DBManager
 {
-    public function createTopic($owner,$name="new Topic", $option=["選項"], $describe="")
+    public function createTopic($owner,$name="new Topic", $option=["option0"], $describe="", $private=false, $vertify="", $deadline=null)
     {
         $result = array("status"=>"","result"=>array());
         try {
-            $query = $this->db->prepare("insert into vote (TopicName,Desc,Enable,Owner) values (:topicName,:describe,false,:owner)");
+            $query = $this->db->prepare("insert into vote (TopicName,`Desc`,Enable,Owner,private,vertify,deadline) values (:topicName,:describe,false,:owner,:private,:vertify,:deadline);");
             $query->bindValue(':topicName', $name);
             $query->bindValue(':describe', $describe);
             $query->bindValue(':owner', (int)$owner, PDO::PARAM_INT);
+            $query->bindValue(':private', $private, PDO::PARAM_BOOL);
+            $query->bindValue(':vertify', $vertify);
+            if ($deadline == null) {
+                $deadline = strtotime(date('Y-m-d H:i:s'));
+                $deadline = date('Y-m-d H:i:s',strtotime('+7 day', $deadline));
+            }
+            $query->bindValue(':deadline', $deadline);
 
             if ($query->execute()) {
                 $result["status"]="Success";
-                $id=$this->db->exec("select last_insert_id() id");
+                $id=$this->db->query("select last_insert_id() id")->fetch(PDO::FETCH_ASSOC)['id'];
                 foreach ($option as $op) {
-                    $query = $this->db->prepare("insert into option (OptionName,TopicId,OptionCount) values (:optionName,:topicId,0)");
+                    $query = $this->db->prepare("insert into `option` (OptionName,TopicId,OptionCount) values (:optionName,:topicId,0)");
                     $query->bindValue(':optionName', $op);
                     $query->bindValue(':topicId', (int)$id, PDO::PARAM_INT);
                     $query->execute();
@@ -29,8 +37,7 @@ class VoteingDB extends DBManger
         }
         catch(PDOException $exception) {
             $result["status"]="error";
-            $result["result"]["Message"]="Exception".$exception->getMessage();
-            throw new Exception("DB Error.");
+            $result["result"]["Message"]="Exception:".$exception->getMessage();
         }
         return json_encode($result);
     }

@@ -10,7 +10,7 @@ abstract class DBManager
                 include("db.ini.php");
             }
             
-            $this->db=new PDO("mysql:host=".$host.";dbname=".$dbname.";charset=utf8", $username, $password);
+            $this->db=new PDO("mysql:host=".$host.";dbname=".$dbname.";charset=utf8", $usr, $password);
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->db->setAttribute(PDO::ATTR_TIMEOUT, 65535);
         }
