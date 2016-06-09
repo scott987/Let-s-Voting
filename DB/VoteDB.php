@@ -46,11 +46,10 @@ class VotingDB extends DBManager
     $id is voting topic id
     $attr is to get some attribution, if null will get all
     **/
-    public function getVoteingInfo($id,$attr=null)
+    public function getVotingInfo($id,$attr=null)
     {
         $result = array("status"=>"","result"=>array());
         try {
-            $query = $this->db->prepare("select :attr from vote where TopicId = :id");
             $select = "";
             if (is_null($attr)) {
                 $select = "*";
@@ -60,12 +59,14 @@ class VotingDB extends DBManager
                 }
                 $select = substr($select, 0, -1);
             }
-            $query->bindValue(':attr', $select);
+            $query = $this->db->prepare("select ".$select." from vote where TopicID = :id");
+            
             $query->bindValue(':id', (int)$id, PDO::PARAM_INT);
 
             if ($query->execute()) {
-                $data = $query->fetchAll();
-               
+                $data = $query->fetchAll(PDO::FETCH_ASSOC);
+                $data[0]["option"] = $this->db->query("select * from `option` where TopicID = ".$id)->fetchAll(PDO::FETCH_ASSOC);
+
                 $result["result"]["data_num"] =count($data);
                 $result["result"]["data"]=$data;
 
@@ -83,7 +84,6 @@ class VotingDB extends DBManager
         catch(PDOException $exception) {
             $result["status"]="error";
             $result["result"]["Message"]="Exception".$exception->getMessage();
-            throw new Exception("DB Error.");
         }
         return json_encode($result);
     }
