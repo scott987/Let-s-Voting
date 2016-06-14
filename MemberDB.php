@@ -50,8 +50,9 @@ class MemberDB extends DBManager{
 			
 			if( $query->execute() ){
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
+				$number=count($data);
 				
-				if( count( $data )==0 ){
+				if( $number==0 ){
 					$result["status"]="warning";
 					$result["status"]["message"]="no data";
 				}
@@ -115,11 +116,13 @@ class MemberDB extends DBManager{
 			
 			if( $query->execute() ){
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
-				if( count($data)>0 ){
+				$number=count($data);
+				
+				if( $number>0 ){ // the user is exist
 					$result["status"]="Success";
 					$result["data"]="true";
 				}
-				else{
+				else{ // the user is not exist
 					$result["status"]="Success";
 					$result["data"]="false";
 				}
