@@ -11,14 +11,15 @@ class MemberDB extends DBManager{
 		$result=array( "status"=>"","result"=>array() );
 		
 		try{
-			$query=$this->db->perpare("select Password from member where Account=:account and Username=:userName");
+			$query=$this->db->prepare("select Password from member where Account=:account and Username=:userName");
 			$query->bindValue(":account",$account);
 			$query->bindValue(":userName",$userName);
 			
 			if( $query->execute() ){
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
+				$number=count($data);
 				
-				if( count($data) ){
+				if( $number==0 ){
 					$result["status"]="warning";
 					$result["status"]["message"]="no data";
 				}
