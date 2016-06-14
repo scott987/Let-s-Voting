@@ -75,20 +75,21 @@ class MemberDB extends DBManager{
 		$result=array( "status"=>"","result"=>array() );
 		
 		try{
-			$query=$this->db->prepare("select * from member where Account=:account ");
+			$query=$this->db->prepare("select Account from member where Account=:account");
 			$query->bindValue(":account",$account);
 			
 			if( $query->execute() ){
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
+				$number=count($data);
 				
-				if( count(data)==0 ){
+				if( $number==0 ){// the account has not been used
 					$this->addAMember($account,$password,$userName,$email);
 					$result["status"]="Success";
 					$result["data"]="sign up done";
 				}
-				else{
+				else{ // the account has been used
 					$result["status"]="warning";
-					$result["data"]="The account or the password has been used";
+					$result["data"]="The account has been used";
 				}
 			}
 			else{
