@@ -8,7 +8,7 @@ class VotingDB extends DBManager
     {
         $result = array("status"=>"","result"=>array());
         try {
-            $query = $this->db->prepare("insert into vote (TopicName,`Desc`,Enable,Owner,private,vertify,deadline) values (:topicName,:describe,false,:owner,:private,:vertify,:deadline);");
+            $query = $this->db->prepare("insert into topic (TopicName,`Desc`,Enable,Owner,private,vertify,deadline) values (:topicName,:describe,false,:owner,:private,:vertify,:deadline);");
             $query->bindValue(':topicName', $name);
             $query->bindValue(':describe', $describe);
             $query->bindValue(':owner', (int)$owner, PDO::PARAM_INT);
@@ -59,7 +59,7 @@ class VotingDB extends DBManager
                 }
                 $select = substr($select, 0, -1);
             }
-            $query = $this->db->prepare("select ".$select." from vote where TopicID = :id");
+            $query = $this->db->prepare("select ".$select." from topic where TopicID = :id");
             
             $query->bindValue(':id', (int)$id, PDO::PARAM_INT);
 
@@ -118,6 +118,6 @@ class VotingDB extends DBManager
     **/
     protected function isVoted($usr)
     {
-        return true;
+        return $this->db->query("select * from vote where UID = ".$usr)->fetch()?true:false;
     }
 }
