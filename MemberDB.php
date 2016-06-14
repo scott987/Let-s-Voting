@@ -7,6 +7,7 @@ class MemberDB extends DBManager{
 		$query->execute( array($account,$password,$userName,$email) );
 	}
 	// this method is to get the user's password
+	// input account and userName
 	public function getPassword($account,$userName){
 		$result=array( "status"=>"","result"=>array() );
 		
@@ -19,16 +20,16 @@ class MemberDB extends DBManager{
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
 				$number=count($data);
 				
-				if( $number==0 ){
+				if( $number==0 ){ // 該帳號不存在
 					$result["status"]="warning";
 					$result["status"]["message"]="no data";
 				}
-				else{
+				else{ // 該帳號存在，並回傳密碼
 					$result["status"]="Success";
 					$result["result"]["data"]=$data;
 				}
 			}
-			else{
+			else{ // SQL語句出錯
 				$result["status"]="error";
 				$result["status"]["message"]="SQL error";
 			}
@@ -40,6 +41,7 @@ class MemberDB extends DBManager{
 		
 		return json_encode( $result );
 	}
+	// input account and password
 	public function getUserInformation($account,$password){
 		$result=array( "status"=>"","result"=>array() );
 		
@@ -52,16 +54,16 @@ class MemberDB extends DBManager{
 				$data=$query->fetchAll( PDO::FETCH_ASSOC );
 				$number=count($data);
 				
-				if( $number==0 ){
+				if( $number==0 ){ // 沒有這個人
 					$result["status"]="warning";
 					$result["status"]["message"]="no data";
 				}
-				else{
+				else{ // 有這個人，並回傳此人資料
 					$result["status"]="Success";
 					$result["result"]["data"]=$data;
 				}
 			}
-			else{
+			else{ // SQL語句出錯
 				$result["status"]="error";
 				$result["status"]["message"]="SQL error";
 			}
@@ -73,6 +75,7 @@ class MemberDB extends DBManager{
 		
 		return json_encode( $result );
 	}
+	// input account , password , userName ,and email
 	public function signUp($account,$password,$userName,$email){
 		$result=array( "status"=>"","result"=>array() );
 		
@@ -94,7 +97,7 @@ class MemberDB extends DBManager{
 					$result["data"]="The account has been used";
 				}
 			}
-			else{
+			else{ // SQL語句出錯
 				$result["status"]="error";
 				$result["status"]["message"]="SQL error";
 			}
@@ -106,6 +109,7 @@ class MemberDB extends DBManager{
 		
 		return json_encode( $result );
 	}
+	// input the account and password
 	public function existThisUser($account,$password){
 		$result=array( "status"=>"","result"=>array() );
 		
@@ -127,7 +131,7 @@ class MemberDB extends DBManager{
 					$result["data"]="false";
 				}
 			}
-			else{
+			else{ // SQL語句出錯
 				$result["status"]="error";
 				$result["status"]["message"]="SQL error";
 			}
