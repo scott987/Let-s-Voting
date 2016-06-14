@@ -4,6 +4,22 @@ require_once("DBManager.php");
 
 class VotingDB extends DBManager
 {
+    /**
+    Create topic
+    $owner is who create topic
+    $name is topic name
+    $option(array) is the options topic has
+    $describe is the describe of topic
+    $private means whether the topic is private or not
+    $vertify is the vertify num
+    $deadline is the deadline of topic
+
+    return "["status"=>"","result"=>[]]"
+    status=="Success":
+    result = "[
+        "id" => topicId
+    ]"
+    **/
     public function createTopic($owner,$name="new Topic", $option=["option0"], $describe="", $private=false, $vertify="", $deadline=null)
     {
         $result = array("status"=>"","result"=>array());
@@ -45,6 +61,14 @@ class VotingDB extends DBManager
     get a voteing information
     $id is voting topic id
     $attr is to get some attribution, if null will get all
+
+    return "["status"=>"","result"=>[]]"
+    status == "warning": no data;
+    status=="Success":
+    result = "[
+        "data_num" => num of data,
+        "data" => array of datas in the database (check the column of topic & option)
+    ]"
     **/
     public function getVotingInfo($id,$attr=null)
     {
@@ -90,32 +114,60 @@ class VotingDB extends DBManager
 
     /**
     vote a option
-    $id is topic id
     $option is the option of topic thich is voted by usr
     $usr is who vote
+
+    return "["status"=>"","result"=>[]]"
+    status=="Success":
+    result = "[
+        "change_num" => num of change data
+    ]"
     **/
-    public function vote($id,$option,$usr="anoymous")
+    public function vote($option,$usr="anoymous")
     {
         $result = array("status"=>"","result"=>array());
         try {
-            if (isVoted($usr)) {
+            if ($usr!="anoymous" && $this->isVoted($usr)) {
                 $result["status"]="error";
-                $result["result"]["Message"]="僅能投票一次";
+                $result["result"]["Message"]="only vote once";
             } else {
-                //TODO retrun meesage
+                if (is_array($option)) {
+                    try {
+                        $this->db->beginTransaction();
+                        foreach ($option as $op) {
+                            $this->db->exec("update `option` set OptionCount = OptionCount + 1 where OptionId = ".$op);
+                            if ($usr != "anoymous") {
+                                $topic = $this->db->query("select TopicId from `option` where OptionId =".$op)->fetch(PDO::FETCH_ASSOC)["TopicId"];
+                                $this->db->exec("insert into vote (UID,OptionId,TopicId) values (".$usr.",".$op.",".$topic.")");
+                            }
+                        }
+                        $this->db->commit();
+                        $result["status"]="Success";
+                        $result["result"]["change_num"]=count($option);
+                    }
+                    catch(PDOException $exception) {
+                        $this->db->rollBack();
+                        $result["status"]="error";
+                        $result["result"]["Message"]="Exception".$exception->getMessage();
+                    }
+                } else {
+                    $this->db->exec("update `option` set OptionCount = OptionCount + 1 where OptionId = ".$option);
+                    if($usr!="anoymous"){
+                        $topic = $this->db->query("select TopicId from `option` where OptionId =".$option)->fetch(PDO::FETCH_ASSOC)["TopicId"];
+                        $this->db->exec("insert into vote (UID,OptionId,TopicId) values (".$usr.",".$option.",".$topic.")");
+                    }   
+                    $result["status"]="Success";
+                    $result["result"]["change_num"]=1;
+                }
             }
         }
         catch(PDOException $exception) {
             $result["status"]="error";
             $result["result"]["Message"]="Exception".$exception->getMessage();
-            throw new Exception("DB Error.");
         }
         return json_encode($result);
     }
 
-    /**
-    TODO
-    **/
     protected function isVoted($usr)
     {
         return $this->db->query("select * from vote where UID = ".$usr)->fetch()?true:false;
