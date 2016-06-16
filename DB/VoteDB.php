@@ -4,6 +4,10 @@ require_once("DBManager.php");
 
 class VotingDB extends DBManager
 {
+    protected function isVoted($usr)
+    {
+        return $this->db->query("select * from vote where UID = ".$usr)->fetch()?true:false;
+    }
     /**
     Create topic
     $owner is who create topic
@@ -22,7 +26,6 @@ class VotingDB extends DBManager
     **/
     public function createTopic($owner,$name="new Topic", $option=["option0"], $describe="", $private=false, $vertify="", $deadline=null)
     {
-        $result = array("status"=>"","result"=>array());
         try {
             $query = $this->db->prepare("insert into topic (TopicName,`Desc`,Enable,Owner,private,vertify,deadline) values (:topicName,:describe,false,:owner,:private,:vertify,:deadline);");
             $query->bindValue(':topicName', $name);
@@ -37,7 +40,6 @@ class VotingDB extends DBManager
             $query->bindValue(':deadline', $deadline);
 
             if ($query->execute()) {
-                $result["status"]="Success";
                 $id=$this->db->query("select last_insert_id() id")->fetch(PDO::FETCH_ASSOC)['id'];
                 foreach ($option as $op) {
                     $query = $this->db->prepare("insert into `option` (OptionName,TopicId,OptionCount) values (:optionName,:topicId,0)");
@@ -45,15 +47,15 @@ class VotingDB extends DBManager
                     $query->bindValue(':topicId', (int)$id, PDO::PARAM_INT);
                     $query->execute();
                 }
+
+                $result = $this->resultMessage("Success");
                 $result["result"]["id"]=$id;
             } else {
-                $result["status"]="error";
-                $result["result"]["Message"]="SQL error";
+                $result = $this->resultMessage("error","SQL error");
             }
         }
         catch(PDOException $exception) {
-            $result["status"]="error";
-            $result["result"]["Message"]="Exception:".$exception->getMessage();
+            $result = $this->exceptionMessage($exception);
         }
         return json_encode($result);
     }
@@ -63,7 +65,7 @@ class VotingDB extends DBManager
     $attr is to get some attribution, if null will get all
 
     return "["status"=>"","result"=>[]]"
-    status == "warning": no data;
+    status == "Warning": no data;
     status=="Success":
     result = "[
         "data_num" => num of data,
@@ -72,7 +74,6 @@ class VotingDB extends DBManager
     **/
     public function getVotingInfo($id,$attr=null)
     {
-        $result = array("status"=>"","result"=>array());
         try {
             $select = "";
             if (is_null($attr)) {
@@ -91,23 +92,20 @@ class VotingDB extends DBManager
                 $data = $query->fetchAll(PDO::FETCH_ASSOC);
                 $data[0]["option"] = $this->db->query("select * from `option` where TopicID = ".$id)->fetchAll(PDO::FETCH_ASSOC);
 
+                
+                if (count($data)==0) {
+                    $result = $this->resultMessage("Warning","no data");
+                } else {
+                    $result = $this->resultMessage("Success");
+                }
                 $result["result"]["data_num"] =count($data);
                 $result["result"]["data"]=$data;
-
-                if (count($data)==0) {
-                    $result["status"]="warning";
-                    $result["result"]["Message"]="no data";
-                } else {
-                    $result["status"]="Success";
-                }
             } else {
-                $result["status"]="error";
-                $result["result"]["Message"]="SQL error";
+                $result = $this->resultMessage("error","SQL error");
             }
         }
         catch(PDOException $exception) {
-            $result["status"]="error";
-            $result["result"]["Message"]="Exception".$exception->getMessage();
+            $result = $this->exceptionMessage($exception);
         }
         return json_encode($result);
     }
@@ -125,11 +123,9 @@ class VotingDB extends DBManager
     **/
     public function vote($option,$usr="anoymous")
     {
-        $result = array("status"=>"","result"=>array());
         try {
             if ($usr!="anoymous" && $this->isVoted($usr)) {
-                $result["status"]="error";
-                $result["result"]["Message"]="only vote once";
+                $result = $this->resultMessage("error","only vote once");
             } else {
                 if (is_array($option)) {
                     try {
@@ -142,13 +138,12 @@ class VotingDB extends DBManager
                             }
                         }
                         $this->db->commit();
-                        $result["status"]="Success";
+                        $result = $this->resultMessage("Success");
                         $result["result"]["change_num"]=count($option);
                     }
                     catch(PDOException $exception) {
                         $this->db->rollBack();
-                        $result["status"]="error";
-                        $result["result"]["Message"]="Exception".$exception->getMessage();
+                        $result = $this->exceptionMessage($exception);
                     }
                 } else {
                     $this->db->exec("update `option` set OptionCount = OptionCount + 1 where OptionId = ".$option);
@@ -156,20 +151,14 @@ class VotingDB extends DBManager
                         $topic = $this->db->query("select TopicId from `option` where OptionId =".$option)->fetch(PDO::FETCH_ASSOC)["TopicId"];
                         $this->db->exec("insert into vote (UID,OptionId,TopicId) values (".$usr.",".$option.",".$topic.")");
                     }   
-                    $result["status"]="Success";
+                    $result = $this->resultMessage("Success");
                     $result["result"]["change_num"]=1;
                 }
             }
         }
         catch(PDOException $exception) {
-            $result["status"]="error";
-            $result["result"]["Message"]="Exception".$exception->getMessage();
+            $result = $this->exceptionMessage($exception);
         }
         return json_encode($result);
-    }
-
-    protected function isVoted($usr)
-    {
-        return $this->db->query("select * from vote where UID = ".$usr)->fetch()?true:false;
     }
 }

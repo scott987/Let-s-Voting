@@ -19,4 +19,19 @@ abstract class DBManager
             throw new Exception("DB Error.");
         }
     }
+
+    protected function resultMessage($status,$Message=null)
+    {
+        $result = array("status"=>"","result"=>array());
+        $result["status"]=$status;
+        if (!is_null($Message)) {
+            $result["result"]["Message"] = $Message;
+        }
+        return $result;
+    }
+
+    protected function exceptionMessage($exception)
+    {
+        return resultMessage("error","Exception:".$exception->getMessage());
+    }
 }
