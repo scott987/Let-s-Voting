@@ -21,22 +21,19 @@ class MemberDB extends DBManager{
 				$number=count($data);
 				
 				if( $number==0 ){ // 該帳號不存在
-					$result["status"]="warning";
-					$result["status"]["message"]="no data";
+					$result=$this->resultMessage("warning","no data");
 				}
 				else{ // 該帳號存在，並回傳密碼
-					$result["status"]="Success";
+					$result=$this->resultMessage("Success");
 					$result["result"]["data"]=$data;
 				}
 			}
 			else{ // SQL語句出錯
-				$result["status"]="error";
-				$result["status"]["message"]="SQL error";
+				$result=$this->resultMessage("error","SQL error");
 			}
 		}
 		catch( PDOException $exception ){
-			$result["status"]="error";
-			$result["status"]["message"]="Exception ".$exception->getMessage();
+			$result=$this->exceptionMessage( $exception );
 		}
 		
 		return json_encode( $result );
@@ -55,22 +52,19 @@ class MemberDB extends DBManager{
 				$number=count($data);
 				
 				if( $number==0 ){ // 沒有這個人
-					$result["status"]="warning";
-					$result["status"]["message"]="no data";
+					$result=$this->resultMessage("warning","no data");
 				}
 				else{ // 有這個人，並回傳此人資料
-					$result["status"]="Success";
+					$result=$this->resultMessage("Success");
 					$result["result"]["data"]=$data;
 				}
 			}
 			else{ // SQL語句出錯
-				$result["status"]="error";
-				$result["status"]["message"]="SQL error";
+				$result=$this->resultMessage("error","SQL error");
 			}
 		}
 		catch( PDOException $exception ){
-			$result["status"]="error";
-			$result["status"]["message"]="Exception ".$exception->getMessage();
+			$result=$this->exceptionMessage( $exception );
 		}
 		
 		return json_encode( $result );
@@ -89,22 +83,19 @@ class MemberDB extends DBManager{
 				
 				if( $number==0 ){// the account has not been used
 					$this->addAMember($account,$password,$userName,$email);
-					$result["status"]="Success";
+					$result=$this->resultMessage("Success");
 					$result["data"]="sign up done";
 				}
 				else{ // the account has been used
-					$result["status"]="warning";
-					$result["data"]="The account has been used";
+					$result=$this->resultMessage("warning","The account has been used");
 				}
 			}
 			else{ // SQL語句出錯
-				$result["status"]="error";
-				$result["status"]["message"]="SQL error";
+				$result=$this->resultMessage("error","SQL error");
 			}
 		}
 		catch( PDOException $exception ){
-			$result["status"]="error";
-			$result["status"]["message"]="Exception ".$exception->getMessage();
+			$result=$this->exceptionMessage( $exception );
 		}
 		
 		return json_encode( $result );
@@ -123,22 +114,20 @@ class MemberDB extends DBManager{
 				$number=count($data);
 				
 				if( $number>0 ){ // the user is exist
-					$result["status"]="Success";
+					$result=$this->resultMessage("Success");
 					$result["data"]="true";
 				}
 				else{ // the user is not exist
-					$result["status"]="Success";
+					$result=$this->resultMessage("Success");
 					$result["data"]="false";
 				}
 			}
 			else{ // SQL語句出錯
-				$result["status"]="error";
-				$result["status"]["message"]="SQL error";
+				$result=$this->resultMessage("error","SQL error");
 			}
 		}
 		catch( PDOException $exception ){
-			$result["status"]="error";
-			$result["status"]["message"]="Exception ".$exception->getMessage();
+			$result=$this->exceptionMessage( $exception );
 		}
 		
 		return json_encode( $result );
